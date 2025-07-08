@@ -56,13 +56,70 @@ const ProductQA: React.FC<ProductQAProps> = ({ product, onClose }) => {
     setQuestion(followUpQuestion);
   };
 
-  const commonQuestions = [
-    "Is this good for oily skin?",
-    "Is this water resistant?",
-    "What's the quality like?",
-    "How does this fit?",
-    "Is this durable?",
-  ];
+  const getProductSpecificQuestions = (product: Product): string[] => {
+    const category = product.category.toLowerCase();
+    
+    if (category.includes('rice') || category.includes('pantry')) {
+      return [
+        "What's the best way to cook this rice?",
+        "How much water should I use for cooking?",
+        "Is this good for biryani?",
+        "What's the grain size and texture?",
+        "How long does this rice last?"
+      ];
+    }
+    
+    if (category.includes('running') || category.includes('shoes')) {
+      return [
+        "Are these suitable for long-distance running?",
+        "How does the cushioning compare to other shoes?",
+        "What's the durability like?",
+        "How do these fit?",
+        "Are they good for different terrains?"
+      ];
+    }
+    
+    if (category.includes('sunscreen') || category.includes('cream')) {
+      return [
+        "Is this good for sensitive skin?",
+        "How often should I reapply?",
+        "Is this water resistant?",
+        "Does it leave a white residue?",
+        "What's the SPF protection level?"
+      ];
+    }
+    
+    if (category.includes('jacket') || category.includes('clothing')) {
+      return [
+        "What's the warmth rating?",
+        "Is this waterproof or water-resistant?",
+        "How does this fit?",
+        "What materials is it made from?",
+        "Is this suitable for layering?"
+      ];
+    }
+    
+    if (category.includes('vegetable') || category.includes('food')) {
+      return [
+        "How fresh is this product?",
+        "What's the best way to store this?",
+        "How long does this last?",
+        "What dishes can I make with this?",
+        "Is this organic?"
+      ];
+    }
+    
+    // Generic fallback questions
+    return [
+      "What's the quality like?",
+      "How does this compare to similar products?",
+      "What are the main features?",
+      "Is this good value for money?",
+      "What do other customers say about this?"
+    ];
+  };
+
+  const commonQuestions = getProductSpecificQuestions(product);
 
   return (
     <motion.div

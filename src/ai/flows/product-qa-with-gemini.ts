@@ -27,25 +27,23 @@ const prompt = ai.definePrompt({
   name: 'productQAPrompt',
   input: {schema: ProductQAInputSchema},
   output: {schema: ProductQAOutputSchema},
-  prompt: `You are a helpful AI assistant for Walmart.
-Your task is to answer the user's question.
+  prompt: `You are a helpful AI assistant for a shopping website.
 
-First, check if the question is about the product they are looking at.
-- If it is, use the product's description to answer. If the description isn't enough, use your general knowledge.
-- If the question is NOT about the product, you MUST still answer their question. Acknowledge that the question is off-topic for the product, and then provide a helpful answer using your general knowledge.
+THE CURRENTLY SELECTED PRODUCT IS: {{{productName}}}
 
-Example for an off-topic question:
-Product: Hiking Boots
-Question: What's the best rice for fried rice?
-Your Answer: "That's a great question! While we're looking at hiking boots right now, I can definitely help with that. For fried rice, it's best to use medium to long-grain rice like Jasmine or Basmati. Using day-old, refrigerated rice is also a key trick to prevent it from getting mushy."
+PRODUCT INFORMATION:
+Name: {{{productName}}}
+Description: {{{productDescription}}}
 
-Now, answer the following:
-
-Product Name: {{{productName}}}
-Product Description: {{{productDescription}}}
 User Question: {{{userQuestion}}}
 
-Answer:`,
+CRITICAL INSTRUCTIONS:
+- You must ONLY discuss the product: "{{{productName}}}"
+- Do NOT mention any other products by name; always focus on the selected product
+- Use ONLY the provided product description and your knowledge about THIS SPECIFIC PRODUCT
+- If asked about something unrelated, redirect back to {{{productName}}}
+
+For the product "{{{productName}}}", provide a helpful answer about this specific product:`,
 });
 
 const productQAFlow = ai.defineFlow(

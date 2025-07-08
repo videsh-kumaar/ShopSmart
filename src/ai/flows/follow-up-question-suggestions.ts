@@ -13,6 +13,8 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const FollowUpQuestionSuggestionsInputSchema = z.object({
+  productName: z.string().describe('The name of the product the user is asking about.'),
+  productDescription: z.string().describe('The product description.'),
   productQuestion: z.string().describe('The question asked about the product.'),
 });
 export type FollowUpQuestionSuggestionsInput = z.infer<typeof FollowUpQuestionSuggestionsInputSchema>;
@@ -23,6 +25,8 @@ const FollowUpQuestionSuggestionsOutputSchema = z.object({
 export type FollowUpQuestionSuggestionsOutput = z.infer<typeof FollowUpQuestionSuggestionsOutputSchema>;
 
 export async function getFollowUpQuestionSuggestions(input: FollowUpQuestionSuggestionsInput): Promise<FollowUpQuestionSuggestionsOutput> {
+  // Ensure we have the right product context
+  console.log('Follow-up suggestions for:', input.productName, 'with question:', input.productQuestion);
   return followUpQuestionSuggestionsFlow(input);
 }
 
@@ -32,13 +36,22 @@ const prompt = ai.definePrompt({
   output: {schema: FollowUpQuestionSuggestionsOutputSchema},
   prompt: `You are an AI assistant designed to suggest follow-up questions for user inquiries about products.
 
-  Given the following question about a product:
-  {{productQuestion}}
+You MUST ONLY suggest questions about the CURRENT product they are viewing:
+Product Name: {{{productName}}}
+Product Description: {{{productDescription}}}
 
-  Suggest three follow-up questions that the user might find helpful to further explore the product. The questions should be concise and directly related to the original question.
+User's question: {{{productQuestion}}}
 
-  Format your response as a JSON array of strings, where each string is a follow-up question.
-  `,
+IMPORTANT: 
+- Generate 3 follow-up questions that are SPECIFICALLY about "{{{productName}}}" 
+- DO NOT suggest questions about other products
+- Focus on the actual product the user is looking at
+- Questions should be related to the product's specific features, uses, or characteristics
+
+For example, if the product is "Basmati Rice Premium Grade", suggest questions about rice cooking, storage, recipes, etc.
+If the product is "Running Shoes", suggest questions about running, fit, performance, etc.
+
+Provide exactly 3 relevant follow-up questions about {{{productName}}}.`,
 });
 
 const followUpQuestionSuggestionsFlow = ai.defineFlow(

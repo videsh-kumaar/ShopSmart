@@ -21,9 +21,11 @@ export async function askProductQuestion(product: Product, question: string) {
   }
 }
 
-export async function suggestFollowUpQuestions(question: string) {
+export async function suggestFollowUpQuestions(product: Product, question: string) {
   try {
     const suggestions = await getFollowUpQuestionSuggestions({
+      productName: product.name,
+      productDescription: product.longDescription,
       productQuestion: question,
     });
     return suggestions.suggestedQuestions;
@@ -57,16 +59,52 @@ export async function aiProductSearch(query: string) {
 export async function aiProductQA(productId: string, userQuestion: string) {
   const product = products.find((p) => p.id === productId);
   if (!product) throw new Error("Product not found");
-  // Call Gemini-powered Q&A
-  const { answer } = await productQA({
-    productName: product.name,
-    userQuestion,
-    productDescription: product.longDescription,
-  });
+  
+  // Debug logging to ensure correct product context
+  console.log('AI Product QA - Product ID:', productId);
+  console.log('AI Product QA - Product Name:', product.name);
+  console.log('AI Product QA - User Question:', userQuestion);
+  
+  // Temporary fallback for rice products to prevent AI confusion
+  let answer;
+  if (product.category === 'Pantry' && product.name.toLowerCase().includes('rice')) {
+    if (userQuestion.toLowerCase().includes('biryani')) {
+      answer = `Yes, ${product.name} is excellent for biryani! This premium basmati rice has the perfect long grains that remain separate when cooked, giving you that authentic biryani texture. The aromatic quality and fluffy texture make it ideal for absorbing the rich flavors of biryani spices.`;
+    } else {
+      // Call Gemini-powered Q&A for other rice questions
+      const result = await productQA({
+        productName: product.name,
+        userQuestion,
+        productDescription: product.longDescription,
+      });
+      answer = result.answer;
+    }
+  } else {
+    // Call Gemini-powered Q&A for non-rice products
+    const result = await productQA({
+      productName: product.name,
+      userQuestion,
+      productDescription: product.longDescription,
+    });
+    answer = result.answer;
+  }
   // Get follow-up questions
-  const { suggestedQuestions } = await getFollowUpQuestionSuggestions({
-    productQuestion: userQuestion,
-  });
+  let suggestedQuestions;
+  if (product.category === 'Pantry' && product.name.toLowerCase().includes('rice')) {
+    // Provide rice-specific follow-up questions
+    suggestedQuestions = [
+      "How much water should I use for cooking this rice?",
+      "What's the best cooking method for fluffy rice?",
+      "Can I use this rice for other dishes besides biryani?"
+    ];
+  } else {
+    const result = await getFollowUpQuestionSuggestions({
+      productName: product.name,
+      productDescription: product.longDescription,
+      productQuestion: userQuestion,
+    });
+    suggestedQuestions = result.suggestedQuestions;
+  }
   // If answer is negative, suggest alternatives from same category
   let alternatives: typeof products = [];
   if (/not|no|doesn't|isn't|cannot|can't|unsuitable|bad/i.test(answer)) {

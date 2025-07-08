@@ -70,7 +70,7 @@ export const products: Product[] = [
     description: 'Broad spectrum protection for all skin types',
     longDescription: 'Advanced mineral sunscreen with zinc oxide and titanium dioxide. Provides superior protection against UVA and UVB rays. Water-resistant for 80 minutes, non-comedogenic, and suitable for sensitive skin.',
     price: 18.99,
-    image: 'https://images.pexels.com/photos/7188366/pexels-photo-7188366.jpeg?auto=compress&cs=tinysrgb&w=500',
+    image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=800&q=60',
     category: 'Skincare',
     sentiment: {
       positive: 89,
@@ -133,7 +133,7 @@ export const products: Product[] = [
     description: 'Comfortable everyday t-shirt in multiple colors',
     longDescription: '100% organic cotton t-shirt with soft, breathable fabric. Pre-shrunk and color-fast. Available in various sizes and colors. Perfect for layering or wearing on its own.',
     price: 14.99,
-    image: 'https://images.pexels.com/photos/1021834/pexels-photo-1021834.jpeg?auto=compress&cs=tinysrgb&w=500',
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=60',
     category: 'Clothing',
     sentiment: {
       positive: 88,

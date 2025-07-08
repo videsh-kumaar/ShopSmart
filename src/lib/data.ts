@@ -646,5 +646,27 @@ export const products: Product[] = [
     dataAiHint: "chicken breast",
     tags: ["ingredient: fried rice", "ingredient: stir fry", "protein"],
   },
+  {
+    id: "30",
+    name: "Basmati Rice Premium Grade",
+    description: "Premium quality basmati rice with exceptional aroma and texture.",
+    longDescription:
+      "Premium grade basmati rice sourced from the finest fields. Known for its distinctive nutty flavor, delicate aroma, and fluffy texture when cooked. Perfect for biryani, pilaf, and other rice dishes. Each grain cooks to perfection with separate, non-sticky results.",
+    price: 12.99,
+    image:
+      "https://images.unsplash.com/photo-1586201375761-83865001e30c?auto=format&fit=crop&w=800&q=60",
+    category: "Pantry",
+    sentiment: {
+      positive: 96,
+      negative: 4,
+      aspects: {
+        aroma: 98,
+        texture: 97,
+        quality: 95,
+      },
+    },
+    dataAiHint: "premium basmati rice",
+    tags: ["ingredient: biryani", "ingredient: pilaf", "rice variety", "premium grain"],
+  },
 ];
 

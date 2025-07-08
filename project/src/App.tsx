@@ -23,9 +23,6 @@ function App() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   const {
     cartItems,
@@ -208,25 +205,6 @@ function App() {
     openCheckout();
   };
 
-  const handleAISearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const response = await fetch("/api/ai-search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query }),
-      });
-      const data = await response.json();
-      setResults(data.products || []);
-    } catch (error) {
-      console.error("Error fetching search results:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Show AI Search Loading
   if (isSearching) {
@@ -400,41 +378,6 @@ function App() {
           )}
         </AnimatePresence>
 
-        {/* AI Search */}
-        <div className="container mx-auto p-4">
-          <h1 className="text-2xl font-bold mb-4">AI Product Search</h1>
-          <form onSubmit={handleAISearch} className="flex gap-2 mb-4">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search for products..."
-              className="border p-2 rounded w-full"
-            />
-            <button
-              type="submit"
-              className="bg-blue-500 text-white p-2 rounded"
-              disabled={loading}
-            >
-              {loading ? "Searching..." : "Search"}
-            </button>
-          </form>
-
-          <div>
-            <h2 className="text-xl font-semibold">Results:</h2>
-            {results.length > 0 ? (
-              <ul>
-                {results.map((product: any, index) => (
-                  <li key={index} className="border-b p-2">
-                    {product.name} - ${product.price}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No products found.</p>
-            )}
-          </div>
-        </div>
 
         {/* Recommendations */}
         <RecommendationPanel
