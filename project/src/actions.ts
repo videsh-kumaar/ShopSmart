@@ -1,5 +1,58 @@
 import { products } from "./data/products";
 
+// Function to get general knowledge answers using Gemini AI
+async function getGeneralKnowledgeAnswer(question: string): Promise<string> {
+  // For client-side, we need to use a different approach
+  // In a production environment, this should go through a secure server endpoint
+  const apiKey = 'AIzaSyC6vrMkOgrPbuHjSYYbYAt9CPp60YU-KyQ'; // Using the provided key directly
+  
+  if (!apiKey) {
+    throw new Error('No API key found for Gemini AI');
+  }
+  
+  console.log('🤖 Making Gemini API request for question:', question);
+  
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + apiKey, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text: `You are a helpful AI assistant. Please provide a clear, concise, and accurate answer to this question: ${question}`
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 1024,
+      }
+    })
+  });
+  
+  console.log('🤖 Gemini API response status:', response.status);
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('🤖 Gemini API error response:', errorText);
+    throw new Error(`Gemini API request failed: ${response.status} - ${errorText}`);
+  }
+  
+  const data = await response.json();
+  console.log('🤖 Gemini API response data:', data);
+  
+  if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+    const answer = data.candidates[0].content.parts[0].text;
+    console.log('🤖 Extracted answer:', answer);
+    return answer;
+  } else {
+    console.error('🤖 Invalid response format:', data);
+    throw new Error('Invalid response format from Gemini API');
+  }
+}
+
 // In-memory conversation context storage (in production, use Redis or similar)
 const conversationContexts = new Map<string, { 
   previousQuestions: string[], 
@@ -7,6 +60,76 @@ const conversationContexts = new Map<string, {
   usedVariationSeeds: string[],
   lastActivity: number 
 }>();
+
+// Function to detect if a question is relevant to the product
+function isQuestionRelevant(question: string, productName: string): boolean {
+  const q = question.toLowerCase();
+  const productWords = productName.toLowerCase().split(' ');
+  
+  // Define patterns for clearly irrelevant questions
+  const irrelevantPatterns = [
+    // Political questions
+    /\b(president|prime minister|government|politics|election|minister|parliament|congress|senate)\b/i,
+    // General knowledge questions
+    /\b(who is|what is|when did|where is|why did|how many|capital of|currency of)\b.*\b(country|nation|state|city|world|universe|planet|earth|history|war|battle)\b/i,
+    // Science/academic questions not related to products
+    /\b(formula|equation|theory|law of|scientific|chemistry|physics|biology|mathematics|calculate|solve)\b/i,
+    // Sports/entertainment
+    /\b(football|cricket|basketball|movie|actor|actress|singer|music|song|album|film|celebrity)\b/i,
+    // Weather/time
+    /\b(weather|temperature|rain|snow|today|tomorrow|yesterday|time|date|calendar)\b/i,
+    // Personal questions
+    /\b(my name|your name|who are you|where do you live|how old|birthday|age)\b/i,
+    // Recipe/cooking questions (treat as general knowledge)
+    /\b(recipe|recipie|recepy|receipe|how to make|how to cook|cooking|preparation|ingredients|steps|method|procedure)\b/i,
+  ];
+  
+  // Check if question matches any irrelevant pattern
+  for (const pattern of irrelevantPatterns) {
+    if (pattern.test(q)) {
+      return false;
+    }
+  }
+  
+  // Define product-related keywords
+  const productKeywords = [
+    'product', 'item', 'buy', 'purchase', 'price', 'cost', 'quality', 'features',
+    'specifications', 'size', 'weight', 'color', 'material', 'brand', 'model',
+    'warranty', 'guarantee', 'return', 'shipping', 'delivery', 'installation',
+    'usage', 'use', 'how to', 'instructions', 'manual', 'guide', 'setup',
+    'maintenance', 'care', 'clean', 'store', 'compatible', 'works with',
+    'suitable', 'good for', 'best for', 'recommended', 'reviews', 'rating',
+    'comparison', 'vs', 'versus', 'better', 'difference', 'alternative',
+    'similar', 'like this', 'durability', 'lasting', 'lifespan', 'performance'
+  ];
+  
+  // Check if question contains product name words
+  for (const word of productWords) {
+    if (word.length > 2 && q.includes(word)) {
+      return true;
+    }
+  }
+  
+  // Check if question contains product-related keywords
+  for (const keyword of productKeywords) {
+    if (q.includes(keyword)) {
+      return true;
+    }
+  }
+  
+  // Check for question words that might be product-related
+  const questionWords = ['how', 'what', 'when', 'where', 'why', 'which', 'can', 'will', 'does', 'is', 'are'];
+  const hasQuestionWord = questionWords.some(word => q.includes(word));
+  
+  // If it has a question word but no clear irrelevant patterns and no product keywords,
+  // it might be a borderline case - let's be conservative and allow it
+  if (hasQuestionWord && q.length < 50) {
+    return true;
+  }
+  
+  // Default to irrelevant for very generic questions
+  return false;
+}
 
 // Mock AI response generator with variation for demo purposes
 function generateMockAIResponse(product: any, userQuestion: string, previousResponses: string[] = []): string {
@@ -194,6 +317,53 @@ export async function aiProductQA(productId: string, userQuestion: string, sessi
     previousQuestionsCount: context.previousQuestions.length,
     timestamp: new Date().toISOString()
   });
+  
+  // Check for irrelevant questions FIRST
+  const isRelevant = isQuestionRelevant(userQuestion, product.name);
+  
+  console.log('🔍 Question Relevance Check:', {
+    userQuestion,
+    productName: product.name,
+    isRelevant,
+    timestamp: new Date().toISOString()
+  });
+  
+  if (!isRelevant) {
+    console.log('❌ Question detected as irrelevant - using general AI:', {
+      productName: product.name,
+      userQuestion,
+      timestamp: new Date().toISOString()
+    });
+    
+    try {
+      // Always use AI for irrelevant questions, even if they mention the product
+      const generalAnswer = await getGeneralKnowledgeAnswer(userQuestion);
+      
+      return {
+        answer: generalAnswer,
+        confidence: 0.90,
+        followUpQuestions: [
+          "What are the main features?",
+          "How does this compare to similar products?",
+          "What's the quality like?"
+        ],
+        alternatives: []
+      };
+    } catch (error) {
+      console.error('Error getting general knowledge answer:', error);
+      // Fallback to redirect message if AI fails
+      return {
+        answer: `I can help with that! However, I'm primarily designed to assist with product questions. For questions about ${product.name}, I can provide detailed information about its features, usage, and specifications.`,
+        confidence: 0.70,
+        followUpQuestions: [
+          "What are the main features?",
+          "How does this compare to similar products?",
+          "What's the quality like?"
+        ],
+        alternatives: []
+      };
+    }
+  }
   
   // Validate product data
   if (!product.name) {

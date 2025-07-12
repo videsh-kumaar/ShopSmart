@@ -9,12 +9,21 @@ import { products } from "@/lib/data";
 
 export async function askProductQuestion(product: Product, question: string) {
   try {
-    const answer = await productQA({
+    const result = await productQA({
       productName: product.name,
       productDescription: product.longDescription,
       userQuestion: question,
     });
-    return answer.answer;
+    
+    // Log relevance for debugging
+    console.log('🔍 Question Relevance:', {
+      productName: product.name,
+      question: question,
+      isRelevant: result.isRelevant,
+      timestamp: new Date().toISOString()
+    });
+    
+    return result.answer;
   } catch (error) {
     console.error(error);
     return "I'm sorry, I encountered an error while trying to answer your question. Please try again.";

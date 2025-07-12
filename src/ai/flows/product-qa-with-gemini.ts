@@ -24,6 +24,7 @@ export type ProductQAInput = z.infer<typeof ProductQAInputSchema>;
 
 const ProductQAOutputSchema = z.object({
   answer: z.string().describe('A human-like answer to the user question about the product.'),
+  isRelevant: z.boolean().describe('Whether the question is relevant to the product.'),
 });
 export type ProductQAOutput = z.infer<typeof ProductQAOutputSchema>;
 
@@ -31,7 +32,7 @@ const prompt = ai.definePrompt({
   name: 'productQAPrompt',
   input: {schema: ProductQAInputSchema},
   output: {schema: ProductQAOutputSchema},
-  prompt: `You are a helpful product expert. Answer the user's specific question with practical advice.
+  prompt: `You are a helpful product expert. First, determine if the user's question is related to the product. Then provide an appropriate response.
 
 🎯 CONTEXT:
 - Product: "{{{productName}}}"
@@ -46,7 +47,17 @@ const prompt = ai.definePrompt({
 📝 Asked before: {{{previousQuestions}}}
 {{/previousQuestions}}
 
-🚨 ABSOLUTE RULES:
+🔍 RELEVANCE CHECK:
+First, analyze if the question is related to:
+- The product itself (features, usage, specifications, quality, etc.)
+- Purchasing decisions about this product
+- Product comparisons or alternatives
+- Product care, maintenance, or troubleshooting
+- Product compatibility or suitability
+
+🚨 RESPONSE RULES:
+
+IF THE QUESTION IS PRODUCT-RELATED (isRelevant: true):
 1. DIRECTLY answer the user's question - NO product marketing
 2. For HOW-TO questions: Give step-by-step instructions
 3. For comfort/quality questions: Explain specific features that provide that benefit
@@ -56,14 +67,20 @@ const prompt = ai.definePrompt({
 7. Start with the answer to their question immediately
 8. Use the response style: "{{{responseVariationSeed}}}"
 
+IF THE QUESTION IS NOT PRODUCT-RELATED (isRelevant: false):
+1. Politely acknowledge that the question is not related to the product
+2. Explain that you're designed to help with product-related questions
+3. Suggest they ask questions about the product features, usage, or specifications
+4. Be helpful and redirect them back to product-related topics
+
 📋 APPROACH:
-- Answer the question FIRST
-- Then explain why, using product features
-- Give actionable advice
+- First determine relevance (isRelevant: true/false)
+- If relevant: Answer the question FIRST, then explain why using product features
+- If not relevant: Politely redirect to product-related questions
 - Be specific and practical
 - Avoid marketing language
 
-💡 The user asked: "{{{userQuestion}}}" - answer it directly:`,
+💡 Analyze: Is "{{{userQuestion}}}" related to the product "{{{productName}}}"?`,
 });
 
 const productQAFlow = ai.defineFlow(
@@ -82,20 +99,57 @@ const productQAFlow = ai.defineFlow(
       timestamp: new Date().toISOString()
     });
     
-    const {output} = await prompt(input);
-    
-    // Log the response for debugging
-    console.log('🤖 ProductQA Flow - Output:', {
-      productName: input.productName,
-      answerLength: output?.answer?.length || 0,
-      timestamp: new Date().toISOString()
-    });
+let output = await prompt(input);
+
+// Check for relevance and provide fallback for irrelevant questions
+if (!output.isRelevant) {
+  output.answer = "I'm here to help with product-related questions. Please ask about product features, usage, or specifications.";
+}
+
+// Log the response for debugging
+console.log('🤖 ProductQA Flow - Output:', {
+  productName: input.productName,
+  answerLength: output?.answer?.length || 0,
+  timestamp: new Date().toISOString()
+});
     
     return output!;
   }
 );
 
 export async function productQA(input: ProductQAInput): Promise<ProductQAOutput> {
+  console.log('🚀 ProductQA: Starting with input:', {
+    productName: input.productName,
+    userQuestion: input.userQuestion,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Pre-check for irrelevant questions
+  const isRelevant = isQuestionRelevant(input.userQuestion, input.productName);
+  
+  console.log('🔍 ProductQA: Relevance check result:', {
+    userQuestion: input.userQuestion,
+    productName: input.productName,
+    isRelevant,
+    timestamp: new Date().toISOString()
+  });
+  
+  if (!isRelevant) {
+    console.log('❌ ProductQA: Question detected as irrelevant:', {
+      productName: input.productName,
+      userQuestion: input.userQuestion,
+      timestamp: new Date().toISOString()
+    });
+    
+    const irrelevantResponse = {
+      answer: `I'm here to help with questions about ${input.productName}. Please ask about the product's features, usage, specifications, or how it might work for your needs. For example, you could ask about its quality, how to use it, or whether it's suitable for a specific purpose.`,
+      isRelevant: false
+    };
+    
+    console.log('🔄 ProductQA: Returning irrelevant response:', irrelevantResponse);
+    return irrelevantResponse;
+  }
+  
   // Add question type classification
   const questionType = classifyQuestionType(input.userQuestion);
   
@@ -113,10 +167,14 @@ export async function productQA(input: ProductQAInput): Promise<ProductQAOutput>
     productName: input.productName,
     questionType,
     userQuestion: input.userQuestion,
-    variationSeed
+    variationSeed,
+    isRelevant
   });
   
-  return productQAFlow(enhancedInput);
+  const result = await productQAFlow(enhancedInput);
+  // Ensure isRelevant is set to true for processed questions
+  result.isRelevant = true;
+  return result;
 }
 
 // Helper function to classify question types
@@ -143,6 +201,74 @@ function classifyQuestionType(question: string): string {
   }
   
   return 'general';
+}
+
+// Function to detect if a question is relevant to the product
+function isQuestionRelevant(question: string, productName: string): boolean {
+  const q = question.toLowerCase();
+  const productWords = productName.toLowerCase().split(' ');
+  
+  // Define patterns for clearly irrelevant questions
+  const irrelevantPatterns = [
+    // Political questions
+    /\b(president|prime minister|government|politics|election|minister|parliament|congress|senate)\b/i,
+    // General knowledge questions
+    /\b(who is|what is|when did|where is|why did|how many|capital of|currency of)\b.*\b(country|nation|state|city|world|universe|planet|earth|history|war|battle)\b/i,
+    // Science/academic questions not related to products
+    /\b(formula|equation|theory|law of|scientific|chemistry|physics|biology|mathematics|calculate|solve)\b/i,
+    // Sports/entertainment
+    /\b(football|cricket|basketball|movie|actor|actress|singer|music|song|album|film|celebrity)\b/i,
+    // Weather/time
+    /\b(weather|temperature|rain|snow|today|tomorrow|yesterday|time|date|calendar)\b/i,
+    // Personal questions
+    /\b(my name|your name|who are you|where do you live|how old|birthday|age)\b/i,
+  ];
+  
+  // Check if question matches any irrelevant pattern
+  for (const pattern of irrelevantPatterns) {
+    if (pattern.test(q)) {
+      return false;
+    }
+  }
+  
+  // Define product-related keywords
+  const productKeywords = [
+    'product', 'item', 'buy', 'purchase', 'price', 'cost', 'quality', 'features',
+    'specifications', 'size', 'weight', 'color', 'material', 'brand', 'model',
+    'warranty', 'guarantee', 'return', 'shipping', 'delivery', 'installation',
+    'usage', 'use', 'how to', 'instructions', 'manual', 'guide', 'setup',
+    'maintenance', 'care', 'clean', 'store', 'compatible', 'works with',
+    'suitable', 'good for', 'best for', 'recommended', 'reviews', 'rating',
+    'comparison', 'vs', 'versus', 'better', 'difference', 'alternative',
+    'similar', 'like this', 'durability', 'lasting', 'lifespan', 'performance'
+  ];
+  
+  // Check if question contains product name words
+  for (const word of productWords) {
+    if (word.length > 2 && q.includes(word)) {
+      return true;
+    }
+  }
+  
+  // Check if question contains product-related keywords
+  for (const keyword of productKeywords) {
+    if (q.includes(keyword)) {
+      return true;
+    }
+  }
+  
+  // Check for question words that might be product-related
+  const questionWords = ['how', 'what', 'when', 'where', 'why', 'which', 'can', 'will', 'does', 'is', 'are'];
+  const hasQuestionWord = questionWords.some(word => q.includes(word));
+  
+  // If it has a question word but no clear irrelevant patterns and no product keywords,
+  // it might be a borderline case - let's be conservative and allow it
+  if (hasQuestionWord && q.length < 50) {
+    return true;
+  }
+  
+  // Default to irrelevant for very generic questions
+  return false;
 }
 
 // Generate variation seed to ensure different responses
