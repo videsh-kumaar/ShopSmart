@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { X, MessageCircle, Send, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Product } from "../types";
-import { GeminiService } from "../services/geminiService";
+import { aiProductQA } from "../actions";
 
 interface ProductQAProps {
   product: Product;
@@ -20,19 +20,15 @@ const ProductQA: React.FC<ProductQAProps> = ({ product, onClose }) => {
   const [question, setQuestion] = useState("");
   const [qaHistory, setQaHistory] = useState<QAItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId] = useState(() => `session-${product.id}-${Date.now()}`);
 
-  const geminiService = GeminiService.getInstance();
-
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!question.trim()) return;
 
     setIsLoading(true);
     try {
-      const response = await geminiService.answerProductQuestion(
-        product.id,
-        question
-      );
+      const response = await aiProductQA(product.id, question.trim(), sessionId);
 
       setQaHistory((prev) => [
         ...prev,
@@ -52,8 +48,30 @@ const ProductQA: React.FC<ProductQAProps> = ({ product, onClose }) => {
     }
   };
 
-  const handleFollowUpClick = (followUpQuestion: string) => {
+  const handleFollowUpClick = async (followUpQuestion: string) => {
     setQuestion(followUpQuestion);
+    
+    // Auto-submit the follow-up question
+    setIsLoading(true);
+    try {
+      const response = await aiProductQA(product.id, followUpQuestion, sessionId);
+
+      setQaHistory((prev) => [
+        ...prev,
+        {
+          question: followUpQuestion,
+          answer: response.answer,
+          confidence: response.confidence,
+          followUpQuestions: response.followUpQuestions,
+        },
+      ]);
+
+      setQuestion("");
+    } catch (error) {
+      console.error("Error getting AI response:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getProductSpecificQuestions = (product: Product): string[] => {

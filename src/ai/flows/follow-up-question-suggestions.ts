@@ -16,6 +16,8 @@ const FollowUpQuestionSuggestionsInputSchema = z.object({
   productName: z.string().describe('The name of the product the user is asking about.'),
   productDescription: z.string().describe('The product description.'),
   productQuestion: z.string().describe('The question asked about the product.'),
+  previousQuestions: z.array(z.string()).optional().describe('Previously asked questions to avoid repetition.'),
+  questionContext: z.string().optional().describe('Context about the type of questions to generate.'),
 });
 export type FollowUpQuestionSuggestionsInput = z.infer<typeof FollowUpQuestionSuggestionsInputSchema>;
 
@@ -41,17 +43,26 @@ Product Name: {{{productName}}}
 Product Description: {{{productDescription}}}
 
 User's question: {{{productQuestion}}}
+{{#previousQuestions}}
+Previously asked questions (DO NOT repeat these): {{{previousQuestions}}}
+{{/previousQuestions}}
+{{#questionContext}}
+Question context: {{{questionContext}}}
+{{/questionContext}}
 
 IMPORTANT: 
-- Generate 3 follow-up questions that are SPECIFICALLY about "{{{productName}}}" 
+- Generate 3 DIFFERENT follow-up questions that are SPECIFICALLY about "{{{productName}}}"
 - DO NOT suggest questions about other products
+- DO NOT repeat any previously asked questions
 - Focus on the actual product the user is looking at
 - Questions should be related to the product's specific features, uses, or characteristics
+- Vary the question types (usage, specifications, comparisons, etc.)
+- Make questions natural and conversational
 
 For example, if the product is "Basmati Rice Premium Grade", suggest questions about rice cooking, storage, recipes, etc.
 If the product is "Running Shoes", suggest questions about running, fit, performance, etc.
 
-Provide exactly 3 relevant follow-up questions about {{{productName}}}.`,
+Provide exactly 3 relevant, varied follow-up questions about {{{productName}}}.`,
 });
 
 const followUpQuestionSuggestionsFlow = ai.defineFlow(

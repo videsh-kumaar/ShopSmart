@@ -100,7 +100,7 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
           >
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
-              <p className="text-4xl font-bold text-blue-600">${product.price}</p>
+                  <p className="text-2xl font-bold text-gray-900 mb-4">₹{product.price}</p>
             </div>
 
             <p className="text-lg text-gray-700 leading-relaxed">
@@ -137,7 +137,7 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 whileTap={{ scale: 0.98 }}
               >
                 <Zap className="w-6 h-6" />
-                Buy Now - ${(product.price * quantity).toFixed(2)}
+                Buy Now - ₹{(product.price * quantity).toFixed(2)}
               </motion.button>
 
               {/* Add to Cart Button */}

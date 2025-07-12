@@ -18,6 +18,8 @@ export interface Product {
       durability?: number;
       waterproof?: number;
       userExperience?: number;
+      aroma?: number;
+      texture?: number;
     };
   };
   dataAiHint: string;

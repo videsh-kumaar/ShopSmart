@@ -20,7 +20,7 @@ export const products: Product[] = [
       }
     },
     dataAiHint: 'High-quality basmati rice with excellent cooking properties, highly rated for taste and texture',
-    tags: ['rice', 'basmati', 'grains', 'cooking', 'biryani', 'fried-rice', 'indian', 'aromatic']
+    tags: ['rice', 'basmati', 'grains', 'cooking', 'biryani', 'indian', 'aromatic']
   },
   {
     id: '2',
@@ -40,7 +40,7 @@ export const products: Product[] = [
       }
     },
     dataAiHint: 'Authentic soy sauce with excellent flavor profile, essential for Asian cooking',
-    tags: ['soy-sauce', 'condiment', 'asian', 'cooking', 'stir-fry', 'marinade', 'umami']
+    tags: ['soy-sauce', 'condiment', 'asian', 'cooking', 'stir-fry', 'marinade', 'umami', 'fried-rice', 'chinese', 'wok']
   },
   {
     id: '3',
@@ -192,9 +192,50 @@ export const products: Product[] = [
     tags: ['charger', 'fast-charging', 'usb-c', 'smartphone', 'adapter', 'electronics', 'portable']
   },
 
-  // Additional Grocery Items
   {
     id: '10',
+    name: 'Fresh Chicken Breast',
+    description: 'Premium quality chicken breast, perfect for biryani and curries',
+    longDescription: 'Fresh, tender chicken breast cuts from farm-raised poultry. High in protein, low in fat. Ideal for biryani, grilling, roasting, and various Indian and international cuisines. Hand-selected for quality and freshness.',
+    price: 8.99,
+    image: 'https://images.pexels.com/photos/616354/pexels-photo-616354.jpeg?auto=compress&cs=tinysrgb&w=500',
+    category: 'Groceries',
+    sentiment: {
+      positive: 88,
+      negative: 12,
+      aspects: {
+        quality: 90,
+        freshness: 92,
+        flavor: 86,
+      }
+    },
+    dataAiHint: 'High-quality fresh chicken breast, excellent for protein-rich meals and traditional recipes',
+    tags: ['chicken', 'meat', 'protein', 'fresh', 'biryani', 'curry', 'grilling', 'poultry']
+  },
+  {
+    id: '11',
+    name: 'Jasmine Rice Premium Grade',
+    description: 'Fragrant long-grain jasmine rice, perfect for fried rice and Asian dishes',
+    longDescription: 'Premium quality jasmine rice with natural floral aroma and soft, sticky texture when cooked. Each grain is carefully selected for consistent quality. Ideal for fried rice, Thai dishes, and Asian cuisines.',
+    price: 11.99,
+    image: 'https://images.pexels.com/photos/4110251/pexels-photo-4110251.jpeg?auto=compress&cs=tinysrgb&w=500',
+    category: 'Groceries',
+    sentiment: {
+      positive: 86,
+      negative: 14,
+      aspects: {
+        quality: 91,
+        freshness: 88,
+        flavor: 89,
+        aroma: 94
+      }
+    },
+    dataAiHint: 'Aromatic jasmine rice with excellent texture, highly rated for Asian cooking and fried rice',
+    tags: ['rice', 'jasmine', 'grains', 'cooking', 'fried-rice', 'asian', 'aromatic', 'thai']
+  },
+  // Additional Grocery Items
+  {
+    id: '12',
     name: 'Extra Virgin Olive Oil',
     description: 'Cold-pressed olive oil for cooking and dressing',
     longDescription: 'Premium extra virgin olive oil from Mediterranean olives. Cold-pressed for maximum flavor and nutrition. Perfect for cooking, salad dressings, and finishing dishes.',

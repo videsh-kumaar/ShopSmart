@@ -89,7 +89,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onProdu
               <h3 className="font-semibold text-lg text-gray-900">{product.name}</h3>
               <p className="text-gray-600 text-sm mt-1">{product.description}</p>
             </div>
-            <span className="text-2xl font-bold text-blue-600">${product.price}</span>
+            <span className="text-2xl font-bold text-blue-600">₹{product.price}</span>
           </div>
 
           <div className="flex flex-wrap gap-1 mb-3">

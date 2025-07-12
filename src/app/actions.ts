@@ -56,63 +56,101 @@ export async function aiProductSearch(query: string) {
   return matchedProducts;
 }
 
-export async function aiProductQA(productId: string, userQuestion: string) {
+// In-memory conversation context storage (in production, use Redis or similar)
+const conversationContexts = new Map<string, { 
+  previousQuestions: string[], 
+  responses: string[], 
+  usedVariationSeeds: string[],
+  lastActivity: number 
+}>();
+
+export async function aiProductQA(productId: string, userQuestion: string, sessionId?: string) {
   const product = products.find((p) => p.id === productId);
   if (!product) throw new Error("Product not found");
   
-  // Debug logging to ensure correct product context
-  console.log('AI Product QA - Product ID:', productId);
-  console.log('AI Product QA - Product Name:', product.name);
-  console.log('AI Product QA - User Question:', userQuestion);
+  // Create session key for conversation tracking
+  const contextKey = sessionId || `${productId}-${Date.now()}`;
   
-  // Temporary fallback for rice products to prevent AI confusion
-  let answer;
-  if (product.category === 'Pantry' && product.name.toLowerCase().includes('rice')) {
-    if (userQuestion.toLowerCase().includes('biryani')) {
-      answer = `Yes, ${product.name} is excellent for biryani! This premium basmati rice has the perfect long grains that remain separate when cooked, giving you that authentic biryani texture. The aromatic quality and fluffy texture make it ideal for absorbing the rich flavors of biryani spices.`;
-    } else {
-      // Call Gemini-powered Q&A for other rice questions
-      const result = await productQA({
-        productName: product.name,
-        userQuestion,
-        productDescription: product.longDescription,
-      });
-      answer = result.answer;
-    }
-  } else {
-    // Call Gemini-powered Q&A for non-rice products
+  // Get or initialize conversation context
+  let context = conversationContexts.get(contextKey) || { 
+    previousQuestions: [], 
+    responses: [], 
+    usedVariationSeeds: [], 
+    lastActivity: Date.now() 
+  };
+  
+  // Debug logging to ensure correct product context
+  console.log('🔍 AI Product QA - Starting:', {
+    productId,
+    productName: product.name,
+    productCategory: product.category,
+    userQuestion,
+    previousQuestionsCount: context.previousQuestions.length,
+    timestamp: new Date().toISOString()
+  });
+  
+  // CRITICAL: Validate that we have the right product context
+  if (!product.name || !product.longDescription) {
+    throw new Error(`Invalid product data for ID: ${productId}`);
+  }
+  
+  try {
+    // Always use the AI flow for dynamic responses
     const result = await productQA({
       productName: product.name,
       userQuestion,
       productDescription: product.longDescription,
+      previousQuestions: context.previousQuestions,
+      conversationContext: context.responses.slice(-2).join(' | ') // Last 2 responses
     });
-    answer = result.answer;
-  }
-  // Get follow-up questions
-  let suggestedQuestions;
-  if (product.category === 'Pantry' && product.name.toLowerCase().includes('rice')) {
-    // Provide rice-specific follow-up questions
-    suggestedQuestions = [
-      "How much water should I use for cooking this rice?",
-      "What's the best cooking method for fluffy rice?",
-      "Can I use this rice for other dishes besides biryani?"
-    ];
-  } else {
-    const result = await getFollowUpQuestionSuggestions({
+    
+    const answer = result.answer;
+    
+    // Update conversation context
+    context.previousQuestions.push(userQuestion);
+    context.responses.push(answer);
+    
+    // Keep only last 5 interactions to prevent memory bloat
+    if (context.previousQuestions.length > 5) {
+      context.previousQuestions = context.previousQuestions.slice(-5);
+      context.responses = context.responses.slice(-5);
+    }
+    
+    conversationContexts.set(contextKey, context);
+    
+    // Get AI-generated follow-up questions with context
+    const followUpResult = await getFollowUpQuestionSuggestions({
       productName: product.name,
       productDescription: product.longDescription,
       productQuestion: userQuestion,
+      previousQuestions: context.previousQuestions,
     });
-    suggestedQuestions = result.suggestedQuestions;
+    
+    // If answer is negative, suggest alternatives from same category
+    let alternatives: typeof products = [];
+    if (/not|no|doesn't|isn't|cannot|can't|unsuitable|bad/i.test(answer)) {
+      alternatives = products.filter(
+        (p) => p.category === product.category && p.id !== product.id
+      );
+    }
+    
+    console.log('✅ AI Product QA - Success:', {
+      productName: product.name,
+      answerLength: answer.length,
+      followUpCount: followUpResult.suggestedQuestions.length,
+      alternativesCount: alternatives.length
+    });
+    
+    return { 
+      answer, 
+      confidence: 0.95, 
+      followUpQuestions: followUpResult.suggestedQuestions, 
+      alternatives 
+    };
+  } catch (error) {
+    console.error('❌ AI Product QA - Error:', error);
+    throw error;
   }
-  // If answer is negative, suggest alternatives from same category
-  let alternatives: typeof products = [];
-  if (/not|no|doesn't|isn't|cannot|can't|unsuitable|bad/i.test(answer)) {
-    alternatives = products.filter(
-      (p) => p.category === product.category && p.id !== product.id
-    );
-  }
-  return { answer, confidence: 0.95, followUpQuestions: suggestedQuestions, alternatives };
 }
 
 export async function aiSmartRecommendations(cartProductIds: string[]) {

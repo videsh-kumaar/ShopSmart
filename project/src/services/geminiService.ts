@@ -204,15 +204,15 @@ export class GeminiService {
   private mapToIngredients(recipeKeywords: string[]): string[] {
     const ingredientMap: Record<string, string[]> = {
       "fried rice": [
-        "rice",
-        "soy sauce",
+        "jasmine",
+        "soy-sauce",
         "onions",
-        "oil",
+        "olive-oil",
         "eggs",
         "vegetables",
       ],
-      biryani: ["basmati rice", "spices", "onions", "meat", "yogurt"],
-      "stir fry": ["vegetables", "soy sauce", "oil", "garlic", "ginger"],
+      biryani: ["basmati", "chicken", "spices", "onions", "meat", "yogurt", "olive-oil"],
+      "stir fry": ["vegetables", "soy-sauce", "olive-oil", "garlic", "ginger"],
     };
 
     return recipeKeywords.flatMap((keyword) => ingredientMap[keyword] || []);

@@ -93,8 +93,8 @@ function App() {
       );
     }
 
-    // Filter by keywords and tags
-    if (intent.keywords.length > 0) {
+    // Filter by keywords and tags (skip for recipe searches as they use ingredients)
+    if (intent.keywords.length > 0 && intent.type !== "recipe") {
       filtered = filtered.filter((product) => {
         const searchText = `${product.name} ${
           product.description
@@ -111,8 +111,8 @@ function App() {
         intent.ingredients!.some(
           (ingredient) =>
             product.tags?.some((tag) =>
-              tag.toLowerCase().includes(ingredient.toLowerCase())
-            ) || product.name.toLowerCase().includes(ingredient.toLowerCase())
+              tag.toLowerCase() === ingredient.toLowerCase()
+            )
         )
       );
     }
