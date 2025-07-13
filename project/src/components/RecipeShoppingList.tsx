@@ -50,7 +50,7 @@ const RecipeShoppingList: React.FC<RecipeShoppingListProps> = ({
               />
               <div className="flex-1">
                 <h4 className="font-semibold text-gray-900">{ingredient.name}</h4>
-                <p className="text-orange-600 font-bold">${ingredient.price}</p>
+                <p className="text-orange-600 font-bold">₹{ingredient.price}</p>
               </div>
               <motion.button
                 onClick={() => onAddToCart(ingredient)}
@@ -68,7 +68,7 @@ const RecipeShoppingList: React.FC<RecipeShoppingListProps> = ({
       <div className="flex items-center justify-between bg-white rounded-lg p-4 border-2 border-orange-200">
         <div>
           <p className="text-gray-600">Total for recipe ingredients:</p>
-          <p className="text-2xl font-bold text-orange-600">${totalPrice.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-orange-600">₹{totalPrice.toFixed(2)}</p>
         </div>
         <motion.button
           onClick={onAddAllToCart}

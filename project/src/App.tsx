@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { ShoppingCart, Sparkles, Store } from "lucide-react";
+import { ShoppingCart, Sparkles } from "lucide-react";
+//import { FaStore } from "react-icons/fa";
+import { TbBrandWalmart } from "react-icons/tb";
 import { motion, AnimatePresence } from "framer-motion";
+import TextAnimation from "./components/TextAnimation";
 import SearchBar from "./components/SearchBar";
 import ProductCard from "./components/ProductCard";
 import ProductDetailPage from "./components/ProductDetailPage";
@@ -16,6 +19,7 @@ import { GeminiService } from "./services/geminiService";
 
 function App() {
   const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [relatedResults, setRelatedResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [currentSearchQuery, setCurrentSearchQuery] = useState("");
   const [searchIntent, setSearchIntent] = useState<SearchIntent | null>(null);
@@ -23,6 +27,8 @@ function App() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  // Indicates whether the user has performed at least one search during the current session
+  const [hasSearched, setHasSearched] = useState(false);
 
   const {
     cartItems,
@@ -55,6 +61,7 @@ function App() {
   const handleSearch = async (query: string) => {
     setCurrentSearchQuery(query);
     setIsSearching(true);
+    setHasSearched(true);
 
     try {
       // Show loading for at least 4 seconds to display the full animation
@@ -62,8 +69,9 @@ function App() {
         const intent = await geminiService.extractSearchIntent(query);
         setSearchIntent(intent);
 
-        const results = searchProducts(intent);
-        setSearchResults(results);
+        const { strictResults, relatedResults } = searchProducts(intent);
+        setSearchResults(strictResults);
+        setRelatedResults(relatedResults);
 
         // Generate contextual recommendations
         await generateRecommendations();
@@ -82,10 +90,24 @@ function App() {
     }
   };
 
-  const searchProducts = (intent: SearchIntent): Product[] => {
+  const searchProducts = (
+    intent: SearchIntent
+  ): { strictResults: Product[]; relatedResults: Product[] } => {
     let filtered = products;
 
-    // Filter by category if specified
+    // Extract price range from search intent if present
+    const priceRange = intent.priceRange;
+
+    // Strict filtering
+    // 1. By price range if specified
+    if (priceRange) {
+      filtered = filtered.filter(
+        (product) =>
+          product.price <= priceRange.max && product.price >= priceRange.min
+      );
+    }
+
+    // 2. By category
     if (intent.category) {
       filtered = filtered.filter(
         (product) =>
@@ -93,7 +115,7 @@ function App() {
       );
     }
 
-    // Filter by keywords and tags (skip for recipe searches as they use ingredients)
+    // 3. By keywords/tags (skip for recipe searches as they use ingredients)
     if (intent.keywords.length > 0 && intent.type !== "recipe") {
       filtered = filtered.filter((product) => {
         const searchText = `${product.name} ${
@@ -105,36 +127,68 @@ function App() {
       });
     }
 
-    // Filter by ingredients for recipes
+    // 4. By ingredients for recipes
     if (intent.ingredients && intent.ingredients.length > 0) {
       filtered = filtered.filter((product) =>
-        intent.ingredients!.some(
-          (ingredient) =>
-            product.tags?.some((tag) =>
-              tag.toLowerCase() === ingredient.toLowerCase()
-            )
+        intent.ingredients?.some((ingredient) =>
+          product.tags?.includes(ingredient.toLowerCase())
         )
       );
     }
 
-    // Filter by skin type
-    if (intent.skinType) {
-      filtered = filtered.filter((product) =>
-        product.tags?.includes(`${intent.skinType}-skin`)
+    // Sort both by relevance (sentiment score)
+    const sortFn = (a: Product, b: Product) => {
+      return b.sentiment.positive - a.sentiment.positive;
+    };
+
+    // Strict results are those matching all criteria
+    const strictResults = [...filtered].sort(sortFn);
+
+    // Related results are those matching some criteria (like same category or keywords)
+    // If we have price range, prioritize showing items within that range first
+    let relatedResults: Product[] = [];
+
+    if (priceRange) {
+      // Show same category items within price range first
+      relatedResults = products
+        .filter((p) => p.price <= priceRange.max && p.price >= priceRange.min)
+        .sort(sortFn);
+
+      // Then show same category items regardless of price
+      relatedResults = [
+        ...relatedResults,
+        ...products
+          .filter(
+            (p) =>
+              intent.category &&
+              p.category.toLowerCase() === intent.category.toLowerCase()
+          )
+          .sort(sortFn),
+      ];
+
+      // Remove duplicates and already shown strict results
+      relatedResults = relatedResults.filter(
+        (p, i, self) =>
+          self.findIndex((pp) => pp.id === p.id) === i &&
+          !strictResults.some((sp) => sp.id === p.id)
       );
+    } else {
+      // Original related results logic
+      relatedResults = products
+        .filter(
+          (p) =>
+            (intent.category &&
+              p.category.toLowerCase() === intent.category.toLowerCase()) ||
+            (intent.keywords.length > 0 &&
+              intent.keywords.some((kw) =>
+                p.tags?.some((t) => t.includes(kw.toLowerCase()))
+              ))
+        )
+        .sort(sortFn)
+        .filter((p) => !strictResults.some((sp) => sp.id === p.id));
     }
 
-    // Filter by budget
-    if (intent.budget) {
-      filtered = filtered.filter((product) => product.price <= intent.budget!);
-    }
-
-    // Sort by relevance (sentiment score and price)
-    return filtered.sort((a, b) => {
-      const aScore = a.sentiment.positive - a.sentiment.negative;
-      const bScore = b.sentiment.positive - b.sentiment.negative;
-      return bScore - aScore;
-    });
+    return { strictResults, relatedResults };
   };
 
   const generateRecommendations = async () => {
@@ -186,6 +240,9 @@ function App() {
     setSearchResults([]);
     setSearchIntent(null);
     setRecommendations([]);
+    setSelectedProduct(null); // Ensure no product detail is open
+    setCurrentSearchQuery(""); // Reset the search box and state
+    setHasSearched(false); // Redirect to home by resetting search state
   };
 
   const handleProductClick = (product: Product) => {
@@ -205,7 +262,6 @@ function App() {
     openCheckout();
   };
 
-
   // Show AI Search Loading
   if (isSearching) {
     return <AISearchLoader query={currentSearchQuery} />;
@@ -214,7 +270,7 @@ function App() {
   if (showWelcome) {
     return (
       <motion.div
-        className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 flex items-center justify-center"
+        className="min-h-screen bg-gradient-to-br from-blue-600 via-purple- to-blue-800 flex items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -259,40 +315,52 @@ function App() {
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="bg-white shadow-sm border-b sticky top-0 z-40"
+        className="bg-[#0071dc] text-white sticky top-0 z-40 shadow-sm"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14">
             <motion.div
               className="flex items-center gap-3"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <Store className="w-8 h-8 text-blue-600" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  ShopSmart AI
-                </h1>
-                <p className="text-xs text-gray-500">
-                  Intelligent Shopping Assistant
+              <button
+                onClick={() => {
+                  setSearchResults([]);
+                  setRelatedResults([]);
+                  setSearchIntent(null);
+                  setSelectedProduct(null);
+                  setCurrentSearchQuery("");
+                  setHasSearched(false);
+                }}
+                className="hover:opacity-80 transition-opacity"
+                aria-label="Return to home"
+              >
+                <TbBrandWalmart className="w-8 h-8 text-yellow-500" />
+              </button>
+              <div className="hidden sm:block">
+                <h1 className="text-lg font-bold text-white">WalSmart AI</h1>
+                <p className="text-xs text-blue-100">
+                  Intelligent Shopping Website
                 </p>
               </div>
             </motion.div>
 
             <motion.button
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+              className="relative p-2 bg-transparent hover:bg-blue-600 rounded-md transition-colors flex items-center gap-1"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <ShoppingCart className="w-6 h-6" />
+              <ShoppingCart className="w-5 h-5" />
+              <span className="hidden sm:inline text-sm font-medium">Cart</span>
               {getTotalItems() > 0 && (
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                  className="absolute -top-1 -right-1 bg-yellow-400 text-blue-900 text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center"
                 >
                   {getTotalItems()}
                 </motion.span>
@@ -311,14 +379,18 @@ function App() {
           className="text-center mb-12"
         >
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            What can I help you find today?
+            <TextAnimation />
           </h2>
           <p className="text-xl text-gray-600 mb-8">
             Ask me anything - from recipes to skincare, I'll find exactly what
             you need
           </p>
 
-          <SearchBar onSearch={handleSearch} isLoading={isSearching} />
+          <SearchBar
+            onSearch={handleSearch}
+            isLoading={isSearching}
+
+          />
         </motion.div>
 
         {/* Recipe Shopping List */}
@@ -376,8 +448,63 @@ function App() {
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
 
+          {/* If no strict results but there are related results, show Oops message and related products */}
+          {/* Only show the Oops message if a search was actually performed (not on initial load) */}
+          {searchResults.length === 0 &&
+            relatedResults.length > 0 &&
+            hasSearched && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="mb-12"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="text-2xl">😔</span>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    Oops, this product is yet not available
+                  </h3>
+                </div>
+                <div className="mb-4 text-gray-700">
+                  However, you might be interested in these related products:
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {relatedResults.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAddToCart={addToCart}
+                      onProductClick={handleProductClick}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+          {/* If no results at all, show a different message */}
+          {searchResults.length === 0 &&
+            relatedResults.length === 0 &&
+            hasSearched && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="mb-12"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="text-2xl">😕</span>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    Oops, we couldn't find any matching products
+                  </h3>
+                </div>
+                <div className="mb-4 text-gray-700">
+                  Try searching for something else or browse our featured
+                  products below:
+                </div>
+              </motion.div>
+            )}
+        </AnimatePresence>
 
         {/* Recommendations */}
         <RecommendationPanel
@@ -387,27 +514,29 @@ function App() {
         />
 
         {/* Featured Products (when no search) */}
-        {searchResults.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-12"
-          >
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">
-              Featured Products
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.slice(0, 8).map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={addToCart}
-                  onProductClick={handleProductClick}
-                />
-              ))}
-            </div>
-          </motion.div>
-        )}
+        {searchResults.length === 0 &&
+          relatedResults.length === 0 &&
+          !hasSearched && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-12"
+            >
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                Featured Products
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {products.slice(0, 8).map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAddToCart={addToCart}
+                    onProductClick={handleProductClick}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
       </main>
 
       {/* Cart Sidebar */}

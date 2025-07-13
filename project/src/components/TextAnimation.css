@@ -1,0 +1,20 @@
+.text-animation {
+  font-size: 34px;
+  font-weight: 600;
+  min-width: 280px;
+  display: inline-block;
+  white-space: nowrap;
+  position: relative;
+  color: #0071CE; /* Walmart blue */
+}
+
+.cursor {
+  display: inline-block;
+  width: 1ch;
+  color: #0071CE;
+  transition: opacity 0.2s;
+}
+
+.cursor.hidden {
+  opacity: 0;
+}

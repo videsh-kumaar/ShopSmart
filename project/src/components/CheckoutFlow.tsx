@@ -143,7 +143,7 @@ const CheckoutFlow: React.FC<CheckoutFlowProps> = ({
                             <p className="text-gray-600 text-sm">Qty: {item.quantity}</p>
                           </div>
                         </div>
-                        <p className="font-semibold">${(item.product.price * item.quantity).toFixed(2)}</p>
+                        <p className="font-semibold">₹{(item.product.price * item.quantity).toFixed(2)}</p>
                       </div>
                     ))}
                   </div>
@@ -151,7 +151,7 @@ const CheckoutFlow: React.FC<CheckoutFlowProps> = ({
                   <div className="border-t pt-4 mt-4">
                     <div className="flex justify-between items-center text-lg font-bold">
                       <span>Total:</span>
-                      <span className="text-blue-600">${totalPrice.toFixed(2)}</span>
+                      <span className="text-blue-600">₹{totalPrice.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -198,7 +198,7 @@ const CheckoutFlow: React.FC<CheckoutFlowProps> = ({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    {isProcessing ? 'Processing...' : `Pay $${totalPrice.toFixed(2)}`}
+                    {isProcessing ? 'Processing...' : `Pay ₹${totalPrice.toFixed(2)}`}
                   </motion.button>
                 </div>
               </motion.div>

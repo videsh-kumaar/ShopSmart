@@ -35,6 +35,10 @@ export interface SearchIntent {
   type: 'product' | 'recipe' | 'skincare' | 'clothing';
   keywords: string[];
   budget?: number;
+  priceRange?: {
+    min: number;
+    max: number;
+  };
   category?: string;
   ingredients?: string[];
   skinType?: string;

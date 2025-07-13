@@ -86,7 +86,7 @@ const Cart: React.FC<CartProps> = ({
                     
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900">{item.product.name}</h3>
-                      <p className="text-gray-600 text-sm">${item.product.price}</p>
+                      <p className="text-gray-600 text-sm">₹{item.product.price}</p>
                       
                       <div className="flex items-center gap-2 mt-2">
                         <motion.button
@@ -111,7 +111,7 @@ const Cart: React.FC<CartProps> = ({
                     
                     <div className="text-right">
                       <p className="font-bold text-gray-900">
-                        ${(item.product.price * item.quantity).toFixed(2)}
+                        ₹{(item.product.price * item.quantity).toFixed(2)}
                       </p>
                       <motion.button
                         onClick={() => onRemoveItem(item.product.id)}
@@ -133,7 +133,7 @@ const Cart: React.FC<CartProps> = ({
           <div className="border-t p-6">
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-semibold">Total:</span>
-              <span className="text-2xl font-bold text-blue-600">${totalPrice.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-blue-600">₹{totalPrice.toFixed(2)}</span>
             </div>
             
             <motion.button

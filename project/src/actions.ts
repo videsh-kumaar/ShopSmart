@@ -365,6 +365,28 @@ export async function aiProductQA(productId: string, userQuestion: string, sessi
     }
   }
   
+  // Special handling for nutrition/calorie related queries
+  if (/calories?|calorie|nutrition|nutritional|energy/i.test(userQuestion.toLowerCase())) {
+    try {
+      const nutritionQuestion = `How many calories are there in ${product.name}? Please provide calories per 100g (or standard serving) and keep the answer concise.`;
+      const nutritionAnswer = await getGeneralKnowledgeAnswer(nutritionQuestion);
+
+      return {
+        answer: nutritionAnswer,
+        confidence: 0.95,
+        followUpQuestions: [
+          "What are the main macronutrients?",
+          "Does it contain any allergens?",
+          "Are there any vitamins or minerals present?"
+        ],
+        alternatives: []
+      };
+    } catch (error) {
+      console.error('Error fetching nutrition information:', error);
+      // If Gemini fails, fall back to generic response below
+    }
+  }
+
   // Validate product data
   if (!product.name) {
     throw new Error(`Invalid product data for ID: ${productId}`);

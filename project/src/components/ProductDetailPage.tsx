@@ -38,12 +38,12 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
       className="fixed inset-0 bg-white z-50 overflow-y-auto"
     >
       {/* Header */}
-      <div className="sticky top-0 bg-white border-b z-10">
+      <div className="sticky top-0 bg-blue-600 border-b z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <motion.button
               onClick={onClose}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-2 text-white hover:text-white-900 transition-colors"
               whileHover={{ x: -5 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -54,7 +54,7 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             <div className="flex items-center gap-2">
               <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
               <span className="font-medium">{(sentimentScore / 20).toFixed(1)}</span>
-              <span className="text-gray-500">({product.sentiment.positive + product.sentiment.negative} reviews)</span>
+              <span className="text-white">({product.sentiment.positive + product.sentiment.negative} reviews)</span>
             </div>
           </div>
         </div>
@@ -154,7 +154,7 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               {/* Know Me More Button - Smaller */}
               <motion.button
                 onClick={() => setShowQA(true)}
-                className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-2 px-4 rounded-full font-medium text-sm hover:from-purple-600 hover:to-blue-600 transition-all duration-300 flex items-center justify-center gap-2 shadow-md"
+                className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 text-white py-2 px-4 rounded-full font-medium text-sm hover:from-indigo-600 hover:to-blue-600 transition-all duration-300 flex items-center justify-center gap-2 shadow-md"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >

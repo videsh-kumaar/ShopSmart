@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Brain, Search, Zap } from 'lucide-react';
+import { Sparkles, Search, Zap } from 'lucide-react';
+import { TbBrandWalmart } from 'react-icons/tb';
 
 interface AISearchLoaderProps {
   query: string;
@@ -9,9 +10,9 @@ interface AISearchLoaderProps {
 const AISearchLoader: React.FC<AISearchLoaderProps> = ({ query }) => {
   const steps = [
     { icon: Search, text: "Analyzing your query...", delay: 0 },
-    { icon: Brain, text: "Understanding intent...", delay: 1 },
-    { icon: Sparkles, text: "Finding perfect matches...", delay: 2 },
-    { icon: Zap, text: "Preparing results...", delay: 3 }
+    { icon: TbBrandWalmart, text: "Understanding intent...", delay: 0.5 },
+    { icon: Sparkles, text: "Finding perfect matches...", delay: 1 },
+    { icon: Zap, text: "Preparing results...", delay: 1.5 }
   ];
 
   return (
@@ -19,7 +20,7 @@ const AISearchLoader: React.FC<AISearchLoaderProps> = ({ query }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-gradient-to-br from-blue-900/95 via-purple-900/95 to-indigo-900/95 backdrop-blur-sm z-50 flex items-center justify-center"
+      className="min-h-screen bg-gradient-to-br from-[#0071CE] via-blue-500 to-blue-800 flex items-center justify-center"
     >
       <div className="text-center max-w-2xl mx-auto px-6">
         {/* Main AI Brain Animation */}
@@ -31,7 +32,7 @@ const AISearchLoader: React.FC<AISearchLoaderProps> = ({ query }) => {
         >
           {/* Pulsing Background Circle */}
           <motion.div
-            className="absolute inset-0 w-32 h-32 mx-auto bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-20"
+            className="absolute inset-0 w-32 h-32 mx-auto bg-gradient-to-r from-blue-400 to-white-400 rounded-full opacity-20"
             animate={{ 
               scale: [1, 1.2, 1],
               opacity: [0.2, 0.4, 0.2]
@@ -45,21 +46,21 @@ const AISearchLoader: React.FC<AISearchLoaderProps> = ({ query }) => {
           
           {/* Central Brain Icon */}
           <motion.div
-            className="relative w-32 h-32 mx-auto bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl"
+            className="relative w-32 h-32 mx-auto bg-gradient-to-r from-blue-500 to-white-400 rounded-full flex items-center justify-center shadow-2xl"
             animate={{ 
               rotateY: [0, 360],
               boxShadow: [
                 "0 0 20px rgba(59, 130, 246, 0.5)",
-                "0 0 40px rgba(147, 51, 234, 0.7)",
+                "0 0 40px rgba(237, 214, 14, 0.7)",
                 "0 0 20px rgba(59, 130, 246, 0.5)"
               ]
             }}
             transition={{ 
-              rotateY: { duration: 3, repeat: Infinity, ease: "linear" },
-              boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+              rotateY: { duration: 1.5, repeat: Infinity, ease: "linear" },
+              boxShadow: { duration: 1, repeat: Infinity, ease: "easeInOut" }
             }}
           >
-            <Brain className="w-16 h-16 text-white" />
+            <TbBrandWalmart className="w-20 h-20 text-yellow-400" />
           </motion.div>
 
           {/* Orbiting Particles */}
@@ -73,16 +74,16 @@ const AISearchLoader: React.FC<AISearchLoaderProps> = ({ query }) => {
                 transformOrigin: '0 0'
               }}
               animate={{
-                rotate: [0, 360],
+                rotateY: [0, 360],
                 x: [0, 80 * Math.cos((i * 60) * Math.PI / 180)],
                 y: [0, 80 * Math.sin((i * 60) * Math.PI / 180)],
                 opacity: [0.3, 1, 0.3]
               }}
               transition={{
-                duration: 3,
+                duration: 1.5,
                 repeat: Infinity,
                 ease: "linear",
-                delay: i * 0.2
+                delay: i * 0.1
               }}
             />
           ))}
@@ -116,13 +117,13 @@ const AISearchLoader: React.FC<AISearchLoaderProps> = ({ query }) => {
                 className="flex items-center gap-4 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20"
               >
                 <motion.div
-                  className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center"
+                  className="w-10 h-10 bg-gradient-to-r from-blue-400 to-white-500 rounded-full flex items-center justify-center"
                   animate={{ 
-                    rotate: [0, 360],
+                    rotateY: [0, 360],
                     scale: [1, 1.1, 1]
                   }}
                   transition={{ 
-                    rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                    rotateY: { duration: 2, repeat: Infinity, ease: "linear" },
                     scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
                   }}
                 >
