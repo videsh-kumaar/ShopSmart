@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useStripe, PaymentRequestButtonElement } from '@stripe/react-stripe-js';
+import type { PaymentRequest } from '@stripe/stripe-js';
 import { X, CreditCard, Check, Package, Truck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CartItem } from '../types';
@@ -20,6 +22,8 @@ const CheckoutFlow: React.FC<CheckoutFlowProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const stripe = useStripe();
+  const [paymentRequest, setPaymentRequest] = useState<PaymentRequest | null>(null);
 
   const steps = [
     { icon: CreditCard, title: 'Payment Details', description: 'Enter your payment information' },
@@ -46,6 +50,46 @@ const CheckoutFlow: React.FC<CheckoutFlowProps> = ({
       setIsProcessing(false);
     }, 2000);
   };
+
+  useEffect(() => {
+    if (stripe && totalPrice > 0) {
+      const pr = stripe.paymentRequest({
+        country: 'IN',
+        currency: 'inr',
+        total: {
+          label: 'WalSmart Total',
+          amount: Math.round(totalPrice * 100),
+        },
+        requestPayerName: true,
+        requestPayerEmail: true,
+      });
+
+      pr.canMakePayment().then(result => {
+        if (result) {
+          setPaymentRequest(pr);
+        }
+      });
+
+      pr.on('paymentmethod', async (ev) => {
+        // In a real app, you would create a PaymentIntent on your server
+        // and use its client secret to confirm the payment here.
+        // For this demo, we'll simulate success.
+        console.log('Payment Method:', ev.paymentMethod);
+        setIsProcessing(true);
+        ev.complete('success');
+        setCurrentStep(1);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setCurrentStep(2);
+        setTimeout(() => {
+          onOrderComplete();
+          onClose();
+          setCurrentStep(0);
+          setIsProcessing(false);
+        }, 2000);
+      });
+    }
+  }, [stripe, totalPrice, onOrderComplete, onClose]);
+
 
   if (!isOpen) return null;
 
@@ -127,7 +171,23 @@ const CheckoutFlow: React.FC<CheckoutFlowProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <div className="mb-6">
+                <div className="space-y-4 mt-6">
+                  {paymentRequest && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <div className="text-center font-semibold text-gray-500 mb-4">Express Checkout</div>
+                      <PaymentRequestButtonElement options={{ paymentRequest }} className="w-full mb-4" />
+                      <div className="flex items-center my-4">
+                        <div className="flex-grow border-t border-gray-300"></div>
+                        <span className="flex-shrink mx-4 text-gray-400 text-sm">OR</span>
+                        <div className="flex-grow border-t border-gray-300"></div>
+                      </div>
+                    </motion.div>
+                  )}
+
                   <h3 className="font-semibold mb-4">Order Summary</h3>
                   <div className="space-y-3 max-h-48 overflow-y-auto">
                     {items.map((item) => (

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Sparkles, Mic } from 'lucide-react';
 import { motion } from 'framer-motion';
+import SearchBarAnimation from './SearchBarAnimation';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -60,12 +61,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = false }) =>
     }
   };
 
-  const quickSearches = [
-    "I want to cook fried rice",
-    "Show me jackets under ₹3000",
-    "Sunscreen for oily skin",
-    "Wireless headphones"
-  ];
+
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -77,11 +73,20 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = false }) =>
             <Search className="text-gray-400 w-5 h-5" />
           </div>
 
+          {/* Animated placeholder */}
+          {!query && (
+            <div className="absolute left-12 top-0 bottom-0 flex items-center pointer-events-none">
+              <span className="text-gray-500 text-lg">
+                <SearchBarAnimation />
+              </span>
+            </div>
+          )}
+
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask me anything... 'I want to cook fried rice' or 'Show me jackets under ₹3000'"
+            placeholder=""
             className="w-full pl-12 pr-28 py-4 text-lg rounded-2xl focus:outline-none bg-white shadow-lg transition-all duration-300"
           />
 
@@ -120,24 +125,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading = false }) =>
           </motion.button>
         </div>
       </form>
-
-      {/* Quick Searches */}
-      <div className="mt-4 flex flex-wrap gap-2 justify-center">
-        {quickSearches.map((search, index) => (
-          <motion.button
-            key={index}
-            onClick={() => {
-              setQuery(search);
-              onSearch(search);
-            }}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors text-sm"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {search}
-          </motion.button>
-        ))}
-      </div>
     </div>
   );
 };

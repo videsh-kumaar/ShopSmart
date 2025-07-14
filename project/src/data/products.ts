@@ -124,6 +124,7 @@ export const products: Product[] = [
         fit: 87,
       }
     },
+    modelSrc: 'https://sketchfab.com/models/7d95660645834760a0a638775e5fe4a7/embed',
     dataAiHint: 'High-quality winter jacket with excellent insulation and waterproof features, great for harsh weather',
     tags: ['jacket', 'winter', 'waterproof', 'insulated', 'puffer', 'cold-weather', 'hood', 'warm']
   },
@@ -145,6 +146,7 @@ export const products: Product[] = [
         durability: 84,
       }
     },
+    modelSrc: 'https://sketchfab.com/models/3b6e78d6a1a74370a6e5af6f312d38f7/embed',
     dataAiHint: 'Comfortable cotton t-shirt with good fit and quality, versatile for casual wear',
     tags: ['t-shirt', 'cotton', 'casual', 'comfortable', 'breathable', 'everyday', 'organic']
   },
@@ -157,6 +159,7 @@ export const products: Product[] = [
     longDescription: 'Advanced wireless headphones with active noise cancellation, 30-hour battery life, and premium drivers. Features quick charge, multipoint connectivity, and comfortable over-ear design.',
     price: 149.99,
     image: 'https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=500',
+    modelSrc: 'https://sketchfab.com/models/f75fddfba6d4422c801e72000abe9894/embed',
     category: 'Electronics',
     sentiment: {
       positive: 91,

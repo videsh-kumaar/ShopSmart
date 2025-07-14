@@ -1,8 +1,8 @@
-# ShopSmart AI – Intelligent E-Commerce Experience for Walmart
+# WalSmart AI – Intelligent E-Commerce Experience for Walmart
 
 ## Overview
 
-ShopSmart AI is a next-generation, AI-powered shopping assistant for Walmart, built for Sparkathon 2025. It features natural language search, smart recommendations, real-time Q&A, sentiment analysis, and a beautiful glassmorphic UI with Apple-style animations.
+WalSmart AI is a next-generation, AI-powered shopping assistant for Walmart, built for Sparkathon 2025. It features natural language search, smart recommendations, real-time Q&A, sentiment analysis, and a beautiful glassmorphic UI with Apple-style animations.
 
 ## Features
 

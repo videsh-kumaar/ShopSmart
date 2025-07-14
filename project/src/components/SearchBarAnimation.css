@@ -1,0 +1,14 @@
+.search-bar-animation {
+  color: #a0aec0; /* A subtle gray for the placeholder */
+}
+
+.search-bar-animation .cursor {
+  display: inline-block;
+  opacity: 1;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}

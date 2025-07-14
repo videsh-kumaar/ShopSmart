@@ -5,6 +5,7 @@ export interface Product {
   longDescription: string;
   price: number;
   image: string;
+  modelSrc?: string; // Add this line for the 3D model
   category: string;
   sentiment: {
     positive: number;

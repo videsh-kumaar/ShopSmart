@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { ShoppingCart, Sparkles } from "lucide-react";
-//import { FaStore } from "react-icons/fa";
 import { TbBrandWalmart } from "react-icons/tb";
 import { motion, AnimatePresence } from "framer-motion";
 import TextAnimation from "./components/TextAnimation";
@@ -27,7 +26,6 @@ function App() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  // Indicates whether the user has performed at least one search during the current session
   const [hasSearched, setHasSearched] = useState(false);
 
   const {
@@ -74,7 +72,7 @@ function App() {
         setRelatedResults(relatedResults);
 
         // Generate contextual recommendations
-        await generateRecommendations();
+        generateRecommendations();
       })();
 
       const minLoadingTime = new Promise((resolve) =>
@@ -191,42 +189,29 @@ function App() {
     return { strictResults, relatedResults };
   };
 
-  const generateRecommendations = async () => {
-    try {
-      const context = {
-        currentCart: cartItems,
-        searchHistory: [],
-        category: searchIntent?.category,
-        budget: searchIntent?.budget,
-      };
-
-      // Simple recommendation logic based on categories and sentiment
-      let recommended = products.filter((product) => {
-        // Don't recommend items already in cart
-        if (cartItems.some((item) => item.product.id === product.id))
-          return false;
-
-        // Recommend based on cart categories
-        const cartCategories = cartItems.map((item) => item.product.category);
-        if (
-          cartCategories.length > 0 &&
-          cartCategories.includes(product.category)
-        ) {
-          return true;
-        }
-
-        // Recommend high-sentiment products
-        const sentimentScore =
-          product.sentiment.positive - product.sentiment.negative;
-        return sentimentScore > 70;
-      });
-
-      // Limit to 4 recommendations
-      recommended = recommended.slice(0, 4);
-      setRecommendations(recommended);
-    } catch (error) {
-      console.error("Recommendation error:", error);
+  const generateRecommendations = () => {
+    if (cartItems.length === 0) {
+      setRecommendations([]);
+      return;
     }
+
+    // Get the category of the last item added to the cart
+    const lastItem = cartItems[cartItems.length - 1];
+    const lastCategory = lastItem.product.category;
+
+    // Find other products in the same category, excluding items already in the cart
+    const categoryRecommendations = products
+      .filter(
+        (p) =>
+          p.category === lastCategory &&
+          !cartItems.some((item) => item.product.id === p.id)
+      )
+      .sort(() => 0.5 - Math.random());
+
+    // We only want to show recommendations from the same category.
+    const finalRecommendations = categoryRecommendations.slice(0, 4);
+
+    setRecommendations(finalRecommendations);
   };
 
   const handleAddAllToCart = () => {
@@ -288,7 +273,7 @@ function App() {
           >
             <Sparkles className="w-16 h-16 mx-auto" />
           </motion.div>
-          <h1 className="text-4xl font-bold mb-2">ShopSmart AI</h1>
+          <h1 className="text-4xl font-bold mb-2">WalSmart AI</h1>
           <p className="text-xl opacity-90">
             Your Intelligent Shopping Assistant
           </p>
@@ -324,20 +309,14 @@ function App() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <button
-                onClick={() => {
-                  setSearchResults([]);
-                  setRelatedResults([]);
-                  setSearchIntent(null);
-                  setSelectedProduct(null);
-                  setCurrentSearchQuery("");
-                  setHasSearched(false);
-                }}
-                className="hover:opacity-80 transition-opacity"
-                aria-label="Return to home"
-              >
-                <TbBrandWalmart className="w-8 h-8 text-yellow-500" />
-              </button>
+              <a href="/" aria-label="Return to home">
+                <button
+                  className="hover:opacity-80 transition-opacity"
+                  aria-label="Return to home"
+                >
+                  <TbBrandWalmart className="w-8 h-8 text-yellow-500" />
+                </button>
+              </a>
               <div className="hidden sm:block">
                 <h1 className="text-lg font-bold text-white">WalSmart AI</h1>
                 <p className="text-xs text-blue-100">

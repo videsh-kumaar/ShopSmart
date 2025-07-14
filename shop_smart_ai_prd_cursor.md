@@ -1,8 +1,8 @@
-# Product Requirements Document (PRD) for ShopSmart AI
+# Product Requirements Document (PRD) for WalSmart AI
 
 ## Project Title:
 
-ShopSmart AI – Intelligent E-Commerce Experience for Walmart (Cursor-Compatible PRD)
+WalSmart AI – Intelligent E-Commerce Experience for Walmart (Cursor-Compatible PRD)
 
 ## Problem Statement:
 

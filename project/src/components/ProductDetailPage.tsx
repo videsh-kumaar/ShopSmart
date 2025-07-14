@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ShoppingCart, Star, ThumbsUp, ThumbsDown, MessageCircle, TrendingUp, Sparkles, Zap } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Star, ThumbsUp, ThumbsDown, MessageCircle, TrendingUp, Sparkles, Zap, View } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product } from '../types';
 import ProductQA from './ProductQA';
+import ARView from './ARView';
 
 interface ProductDetailPageProps {
   product: Product;
@@ -17,7 +18,9 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   onAddToCart,
   onBuyNow
 }) => {
-  const [showQA, setShowQA] = useState(false);
+
+    const [showQA, setShowQA] = useState(false);
+  const [showAR, setShowAR] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
   const sentimentScore = Math.round((product.sentiment.positive / (product.sentiment.positive + product.sentiment.negative)) * 100);
@@ -152,6 +155,20 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
               </motion.button>
 
               {/* Know Me More Button - Smaller */}
+              {/* View in AR Button */}
+              {product.modelSrc && (
+                <motion.button
+                  onClick={() => setShowAR(true)}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-full font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-300 flex items-center justify-center gap-2 shadow-md"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <View className="w-5 h-5" />
+                  View in AR
+                </motion.button>
+              )}
+
+              {/* Know Me More Button - Smaller */}
               <motion.button
                 onClick={() => setShowQA(true)}
                 className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 text-white py-2 px-4 rounded-full font-medium text-sm hover:from-indigo-600 hover:to-blue-600 transition-all duration-300 flex items-center justify-center gap-2 shadow-md"
@@ -234,6 +251,13 @@ const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
             product={product}
             onClose={() => setShowQA(false)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* AR View Modal */}
+      <AnimatePresence>
+        {showAR && product.modelSrc && (
+          <ARView modelSrc={product.modelSrc} onClose={() => setShowAR(false)} />
         )}
       </AnimatePresence>
     </motion.div>
